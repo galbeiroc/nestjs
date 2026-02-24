@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { v4 } from 'uuid';
 
 import { Task, TaskStatus } from './task.entity';
 
@@ -15,6 +16,18 @@ export class TasksService {
 
   getAllTasks() {
     return this.tasks;
+  }
+
+  createTask(title: string, description: string) {
+    const task: Task = {
+      id: v4(),
+      title,
+      description,
+      status: TaskStatus.PENDING,
+    };
+    this.tasks.push(task);
+
+    return task;
   }
 
   updateTask() {}
