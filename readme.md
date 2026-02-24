@@ -109,6 +109,101 @@ export class CatsController {
 
 The `@Get()` HTTP request method decorator placed before the findAll() method tells Nest to create a handler for a specific endpoint for HTTP requests.
 
+### Resources
+
+Earlier, we defined an endpoint to fetch the cats resource (**GET** route). We'll typically also want to provide an endpoint that creates new records. For this, let's create the **POST** handler:
+
+```ts
+import { Controller, Get, Post } from '@nestjs/common';
+
+@Controller('cats')
+export class CatsController {
+  @Post()
+  create(): string {
+    return 'This action adds a new cat';
+  }
+
+  @Get()
+  findAll(): string {
+    return 'This action returns all cats';
+  }
+}
+```
+
+Nest provides decorators for all of the standard HTTP methods: `@Get()`, `@Post()`, `@Put()`, `@Delete()`, `@Patch()`, `@Options()`, and `@Head()`. In addition, `@All()` defines an endpoint that handles all of them.
+
+### Route wildcards
+
+Pattern-based routes are also supported in NestJS. For example, the asterisk (`*`) can be used as a wildcard to match any combination of characters in a route at the end of a path. In the following example, the `findAll()` method will be executed for any route that starts with `abcd/`, regardless of the number of characters that follow.
+
+```ts
+@Get('abcd/*')
+findAll() {
+  return 'This route uses a wildcard';
+}
+```
+
+### Route parameters
+
+Routes with static paths won’t work when you need to accept dynamic data as part of the request (e.g., `GET /cats/1` to get the cat with id 1). The route parameter token in the `@Get()` decorator example below illustrates this approach. These route parameters can then be accessed using the `@Param()` decorator.
+
+```ts
+@Get(':id')
+findOne(@Param('id') id: string): string {
+  return `This action returns a #${id} cat`;
+}
+```
+
+### Status code
+
+As mentioned, the default status code for responses is always **200**, except for POST requests, which default to **201**. You can easily change this behavior by using the `@HttpCode(...)` decorator at the handler level.
+
+```ts
+@Post()
+@HttpCode(201)
+create() {
+  return 'This action adds a new cat';
+}
+```
+
+### Request payloads
+
+We need to define the DTO (_Data Transfer Object_) schema. A DTO is an object that specifies how data should be sent over the network. The `@Body()` decorator in NestJS is used to extract the body property from the incoming HTTP request object within a controller's route handler.
+
+DTO
+
+```ts
+export class CreateCatDto {
+  name: string;
+  age: number;
+  breed: string;
+}
+```
+
+It has only three basic properties. Thereafter we can use the newly created DTO inside the `CatsController`:
+
+```ts
+@Post()
+async create(@Body() createCatDto: CreateCatDto) {
+  return 'This action adds a new cat';
+}
+```
+
+### Query parameters
+
+When handling query parameters in your routes, you can use the `@Query()` decorator to extract them from incoming requests. Let's see how this works in practice.
+
+Consider a route where we want to filter a list of cats based on query parameters like `age` and `breed`. First, define the query parameters in the `CatsController`:
+
+`GET /cats?age=2&breed=Persian`
+
+```ts
+@Get()
+async findAll(@Query('age') age: number, @Query('breed') breed: string) {
+  return `This action returns all cats filtered by age: ${age} and breed: ${breed}`;
+}
+```
+
 ## Providers
 
 Providers are a core concept in Nest. Many of the basic Nest classes, such as services, repositories, factories, and helpers, can be treated as providers. The key idea behind a provider is that it can be injected as a dependency, allowing objects to form various relationships with each other. The responsibility of "wiring up" these objects is largely handled by the Nest runtime system.
