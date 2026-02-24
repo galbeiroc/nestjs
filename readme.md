@@ -20,7 +20,7 @@ Setting up a new project is quite simple with the Nest `CLI`. With npm installed
 
 `src/` directory will be created and populated with several core files.
 
-| Core files | Description |
+| Resource files | Description |
 | :------- | :------- |
 | `app.controller.ts` | A basic controller with a single route. |
 | `app.controller.spec.ts` | The unit tests for the controller. |
@@ -77,5 +77,43 @@ you can run the following command to start the application:
 | sub-app       | app         | Generate a new application within a monorepo |
 
 Example:
-`nest generate module <module name>`
+`nest g resource [name]`
+`nest generate module [module name]`
+`nest g controller [controller name] --no-spec`
 
+The flag `--no-spec` avoid to create test file.
+
+## Controllers
+
+Controllers are responsible for handling incoming requests and sending responses back to the client.
+A controller's purpose is to handle specific requests for the application. The _routing_ mechanism determines which controller will handle each request. Often, a controller has multiple routes, and each route can perform a different action.
+To create a basic controller, we use classes and **decorators**.
+
+### Routing
+
+we’ll use the `@Controller()` decorator, which is required to define a basic controller.
+Since we've set a prefix (`cats`) for every route and haven't added any specific path in the method decorator, Nest will map `GET/cats` requests to this handler.
+
+```js
+import { Controller, Get, Req } from '@nestjs/common';
+import type { Request } from 'express';
+
+@Controller('cats')
+export class CatsController {
+  @Get()
+  findAll(@Req() request: Request): string {
+    return 'This action returns all cats';
+  }
+}
+```
+
+The `@Get()` HTTP request method decorator placed before the findAll() method tells Nest to create a handler for a specific endpoint for HTTP requests.
+
+## Providers
+
+Providers are a core concept in Nest. Many of the basic Nest classes, such as services, repositories, factories, and helpers, can be treated as providers. The key idea behind a provider is that it can be injected as a dependency, allowing objects to form various relationships with each other. The responsibility of "wiring up" these objects is largely handled by the Nest runtime system.
+
+## Modules
+
+A module is a class that is annotated with the `@Module()` decorator. This decorator provides metadata that Nest uses to organize and manage the application structure efficiently.
+Every Nest application has at least one module, the root module, which serves as the starting point for Nest to build the application graph.
