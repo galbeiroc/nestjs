@@ -31,5 +31,12 @@ export class TasksService {
   }
 
   updateTask() {}
-  deleteTask() {}
+
+  deleteTask(id: string) {
+    // const index = this.tasks.findIndex((task) => task.id === id);
+    // this.tasks.splice(index, 1);
+    this.tasks = this.tasks.filter((task) => task.id !== id);
+
+    return this.tasks;
+  }
 }
