@@ -208,7 +208,113 @@ async findAll(@Query('age') age: number, @Query('breed') breed: string) {
 
 Providers are a core concept in Nest. Many of the basic Nest classes, such as services, repositories, factories, and helpers, can be treated as providers. The key idea behind a provider is that it can be injected as a dependency, allowing objects to form various relationships with each other. The responsibility of "wiring up" these objects is largely handled by the Nest runtime system.
 
+### Services
+
+Let's begin by creating a simple `CatsService`. This service will handle data storage and retrieval, and it will be used by the `CatsController`. Because of its role in managing the application's logic, it’s an ideal candidate to be defined as a provider.
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { Cat } from './interfaces/cat.interface';
+
+
+export interface Cat {
+  name: string;
+  age: number;
+  breed: string;
+}
+
+@Injectable()
+export class CatsService {
+  private readonly cats: Cat[] = [];
+
+  create(cat: Cat) {
+    this.cats.push(cat);
+  }
+
+  findAll(): Cat[] {
+    return this.cats;
+  }
+}
+```
+
+### Dependency injection
+
+Nest is built around the powerful design pattern known as Dependency Injection. We highly recommend reading a great article about this concept in the official [Angular documentation](https://angular.dev/guide/di).
+In Nest, thanks to TypeScript's capabilities, managing dependencies is straightforward because they are resolved based on their type. In the example below, Nest will resolve the `catsService` by creating and returning an instance of `CatsService` (or, in the case of a singleton, returning the existing instance if it has already been requested elsewhere). This dependency is then injected into your _controller's constructor_:
+
+1. In `cats.service.ts`, the `@Injectable()` decorator declares the `CatsService` class as a class that can be managed by the Nest IoC container.
+2. In `cats.controller.ts`, `CatsController` declares a dependency on the `CatsService` token with constructor injection:
+`constructor(private catsService: CatsService) {}`
+3. In `app.module.ts`, we associate the token `CatsService` with the class `CatsService` from the `cats.service.ts` file.
+
+### Provider registration
+
+Now that we've defined a provider (`CatsService`) and a consumer (`CatsController`), we need to register the service with Nest so that it can handle the injection. This is done by editing the module file (`app.module.ts`) and adding the service to the `providers` array in the `@Module()` decorator.
+
+```ts
+import { Module } from '@nestjs/common';
+import { CatsController } from './cats/cats.controller';
+import { CatsService } from './cats/cats.service';
+
+@Module({
+  controllers: [CatsController],
+  providers: [CatsService],
+})
+export class AppModule {}
+```
+
 ## Modules
 
 A module is a class that is annotated with the `@Module()` decorator. This decorator provides metadata that Nest uses to organize and manage the application structure efficiently.
-Every Nest application has at least one module, the root module, which serves as the starting point for Nest to build the application graph.
+Every Nest application has at least one module, the **root** module, which serves as the starting point for Nest to build the application graph.
+Modules are highly recommended as an effective way to organize your components.
+The `@Module()` decorator takes a single object with properties that describe the module:
+
+| Properties | Description |
+| :--------- | :---------- |
+| `providers` | The providers that will be instantiated by the Nest injector and that may be shared at least across this module |
+| `controllers` | The set of controllers defined in this module which have to be instantiated |
+| `imports` | The list of imported modules that export the providers which are required in this module |
+| `exports` | The subset of providers that are provided by this module and should be available in other modules which import this module. You can use either the provider itself or just its token (provide value) |
+
+### Feature modules
+
+In our example, the CatsController and CatsService are closely related and serve the same application domain. It makes sense to group them into a feature module.
+
+we'll create the `CatsModule` to demonstrate how to group the controller and service.
+
+```ts
+import { Module } from '@nestjs/common';
+import { CatsController } from './cats.controller';
+import { CatsService } from './cats.service';
+
+@Module({
+  controllers: [CatsController],
+  providers: [CatsService],
+})
+export class CatsModule {}
+```
+
+### Shared modules
+
+In Nest, modules are singletons by default, and thus you can share the same instance of any provider between multiple modules effortlessly.
+Every module is automatically a **shared module**. Once created it can be reused by any module. Let's imagine that we want to share an instance of the `CatsService` between several other modules. In order to do that, we first need to export the `CatsService` provider by adding it to the module's `exports` array, as shown below:
+
+```ts
+import { Module } from '@nestjs/common';
+import { CatsController } from './cats.controller';
+import { CatsService } from './cats.service';
+
+@Module({
+  controllers: [CatsController],
+  providers: [CatsService],
+  exports: [CatsService] // exports
+})
+export class CatsModule {}
+```
+
+Now any module that imports the `CatsModule` has access to the `CatsService` and will share the same instance with all other modules that import it as well.
+
+### Global modules
+
+The `@Global()` decorator makes the module global-scoped. Global modules should be registered only once, generally by the root or core module. In the above example, the `CatsService` provider will be ubiquitous, and modules that wish to inject the service will not need to import the `CatsModule` in their imports array.

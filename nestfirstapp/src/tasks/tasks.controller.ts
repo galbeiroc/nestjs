@@ -15,7 +15,8 @@ import { CreateTaskDTO, UpdateTaskDTO } from './dto/task.dto';
 export class TasksController {
   constructor(private taskService: TasksService) {}
 
-  @Get('all/') // wildcards
+  // @Get('all/') wildcards
+  @Get()
   helloworld() {
     return this.taskService.getAllTasks();
   }
